@@ -1,10 +1,12 @@
 package com.mycompany.simpleinventorycrudapp;
 
+import java.awt.CardLayout;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import java.awt.CardLayout;
-import com.mycompany.simpleinventorycrudapp.ui.LoginPanel;
+
 import com.mycompany.simpleinventorycrudapp.ui.DashboardPanel;
+import com.mycompany.simpleinventorycrudapp.ui.LoginPanel;
 import com.mycompany.simpleinventorycrudapp.ui.RegistrationPanel;
 
 public class MainFrame extends JFrame {

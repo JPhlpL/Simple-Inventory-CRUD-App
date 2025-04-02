@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -50,7 +51,7 @@ public class DashboardPanel extends JPanel {
     private DefaultTableModel tableModel;
     private JTable table;
     private JTextField searchField;
-    private JButton editButton, updateButton, deleteButton, deleteAllButton, importButton, searchButton, logoutButton;
+    private JButton editButton, insertButton, updateButton, deleteButton, deleteAllButton, importButton, searchButton, logoutButton;
     private JTextField idField, partNameField, partNumberField, supplierNameField, stocksField;
     private JDateChooser transactDatePicker;
     private BufferedImage iconImage;
@@ -61,6 +62,7 @@ public class DashboardPanel extends JPanel {
     public DashboardPanel(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
         initialize();
+
     }
 
     private void initialize() {
@@ -72,7 +74,7 @@ public class DashboardPanel extends JPanel {
         sidebarPanel.setBackground(Color.BLACK);
 
         JPanel inputPanel = new JPanel(new GridBagLayout());
-        inputPanel.setBackground(Color.BLACK);
+        // inputPanel.setBackground(Color.BLACK);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 10, 5, 10);
@@ -141,7 +143,7 @@ public class DashboardPanel extends JPanel {
         inputPanel.add(transactDatePicker, gbc);
 
         JPanel buttonPanel = new JPanel(new GridLayout(0, 1, 5, 5));
-        buttonPanel.setBackground(Color.BLACK);
+        insertButton = new JButton("Insert");
         updateButton = new JButton("Update");
         importButton = new JButton("Import");
         logoutButton = new JButton("Logout");
@@ -149,7 +151,10 @@ public class DashboardPanel extends JPanel {
         deleteButton = new JButton("Delete");
         deleteAllButton = new JButton("Delete All");
 
+        buttonPanel.add(insertButton);
         buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(deleteAllButton);
         buttonPanel.add(importButton);
         buttonPanel.add(logoutButton);
 
@@ -179,8 +184,28 @@ public class DashboardPanel extends JPanel {
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
         searchPanel.add(editButton);
-        searchPanel.add(deleteButton);
-        searchPanel.add(deleteAllButton);
+
+        // Apply color and font to buttons and text fields
+        java.awt.Color textColor = java.awt.Color.WHITE;
+        java.awt.Color buttonColor = java.awt.Color.DARK_GRAY;
+
+        insertButton.setForeground(textColor);
+        editButton.setForeground(textColor);
+        updateButton.setForeground(textColor);
+        deleteButton.setForeground(textColor);
+        deleteAllButton.setForeground(textColor);
+        importButton.setForeground(textColor);
+        searchButton.setForeground(textColor);
+        logoutButton.setForeground(textColor);
+
+        insertButton.setBackground(buttonColor);
+        editButton.setBackground(buttonColor);
+        updateButton.setBackground(buttonColor);
+        deleteButton.setBackground(buttonColor);
+        deleteAllButton.setBackground(buttonColor);
+        importButton.setBackground(buttonColor);
+        searchButton.setBackground(buttonColor);
+        logoutButton.setBackground(buttonColor);
 
         // Outer panel
         JPanel outerPanel = new JPanel(new BorderLayout());
@@ -194,6 +219,7 @@ public class DashboardPanel extends JPanel {
         loadData();
 
         // Action listeners
+        insertButton.addActionListener(e -> insertRow());
         editButton.addActionListener(e -> editRow());
         updateButton.addActionListener(e -> updateRow());
         deleteButton.addActionListener(e -> deleteRow());
@@ -267,6 +293,67 @@ public class DashboardPanel extends JPanel {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private void insertRow() {
+        // Gather and validate input values
+        String partName = partNameField.getText().trim();
+        String partNumber = partNumberField.getText().trim();
+        String supplierName = supplierNameField.getText().trim();
+        String stocksText = stocksField.getText().trim();
+        Date selectedDate = transactDatePicker.getDate();
+
+        if (partName.isEmpty() || partNumber.isEmpty() || stocksText.isEmpty() || selectedDate == null) {
+            JOptionPane.showMessageDialog(this, "Please fill in all required fields!", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        int stocks;
+        try {
+            stocks = Integer.parseInt(stocksText);
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(this, "Stocks must be a valid number!", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Format the date with time (e.g., "yyyy-MM-dd HH:mm:ss")
+        String formattedTimestamp = dateFormat.format(selectedDate);
+
+        // Insert the new record into the database
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO transactions (part_name, part_number, supplier_name, stocks, timestamp) VALUES (?, ?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, partName);
+            ps.setString(2, partNumber);
+            ps.setString(3, supplierName);
+            ps.setInt(4, stocks);
+            ps.setString(5, formattedTimestamp); // Alternatively, you could convert to a Timestamp if needed
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Inserting transaction failed, no rows affected.");
+            }
+
+            // Retrieve the auto-generated ID for the new row
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int newId = generatedKeys.getInt(1);
+                    // Add the new row to the table model
+                    Object[] rowData = {newId, partName, partNumber, supplierName, stocks, formattedTimestamp};
+                    tableModel.addRow(rowData);
+                    JOptionPane.showMessageDialog(this, "Record inserted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    throw new SQLException("Inserting transaction failed, no ID obtained.");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error inserting record.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Clear the input fields after insertion
+        clearFields();
     }
 
     private void updateRow() {

@@ -21,7 +21,7 @@ import com.mycompany.simpleinventorycrudapp.db.DatabaseManager;
 
 public class RegistrationPanel extends JPanel {
 
-    private MainFrame mainFrame;
+    private final MainFrame mainFrame;
     private JTextField registerUsernameField, registerNameField;
     private JPasswordField registerPasswordField, registerConfirmPasswordField;
 
@@ -31,57 +31,68 @@ public class RegistrationPanel extends JPanel {
     }
 
     private void initialize() {
+        // Use GridBagLayout for a two-column layout
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // Create labels
         JLabel labelUsername = new JLabel("Username:");
         JLabel labelName = new JLabel("Name:");
         JLabel labelPassword = new JLabel("Password:");
         JLabel labelConfirm = new JLabel("Confirm Password:");
 
-        registerUsernameField = new JTextField(10);
-        registerNameField = new JTextField(10);
-        registerPasswordField = new JPasswordField(10);
-        registerConfirmPasswordField = new JPasswordField(10);
+        // Create input fields with a bit wider columns
+        registerUsernameField = new JTextField(15);
+        registerNameField = new JTextField(15);
+        registerPasswordField = new JPasswordField(15);
+        registerConfirmPasswordField = new JPasswordField(15);
 
+        // Row 0: Username label and field
         gbc.gridx = 0;
         gbc.gridy = 0;
         add(labelUsername, gbc);
+        gbc.gridx = 1;
+        add(registerUsernameField, gbc);
+
+        // Row 1: Name label and field
+        gbc.gridx = 0;
         gbc.gridy = 1;
         add(labelName, gbc);
+        gbc.gridx = 1;
+        add(registerNameField, gbc);
+
+        // Row 2: Password label and field
+        gbc.gridx = 0;
         gbc.gridy = 2;
         add(labelPassword, gbc);
+        gbc.gridx = 1;
+        add(registerPasswordField, gbc);
+
+        // Row 3: Confirm Password label and field
+        gbc.gridx = 0;
         gbc.gridy = 3;
         add(labelConfirm, gbc);
-
         gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        add(registerUsernameField, gbc);
-        gbc.gridy = 1;
-        add(registerNameField, gbc);
-        gbc.gridy = 2;
-        add(registerPasswordField, gbc);
-        gbc.gridy = 3;
         add(registerConfirmPasswordField, gbc);
 
+        // Create a separate panel for buttons
         JButton registerButton = new JButton("Register");
         JButton backButton = new JButton("Back");
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(registerButton);
+        buttonPanel.add(backButton);
 
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.gridheight = 4;
-        gbc.fill = GridBagConstraints.NONE;
+        // Row 4: Button panel spanning both columns
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        add(registerButton, gbc);
+        add(buttonPanel, gbc);
 
-        gbc.gridx = 3;
-        gbc.gridy = 0;
-        gbc.gridheight = 1;
-        add(backButton, gbc);
-
+        // Button actions
         registerButton.addActionListener(e -> registerUser());
         backButton.addActionListener(e -> mainFrame.showLoginPanel());
     }
